@@ -95,8 +95,6 @@ const cellCount = {
 };
 
 let scores = [];
-// let totalTime;
-// let score;
 let count = cellCount['4x4'].number;
 let widthCell = cellCount['4x4'].width;
 let currentCellCount = '4x4';
@@ -192,13 +190,20 @@ function createNewGame(n) {
   min = 0;
   sec = 0;
   moves.innerHTML = `Moves ${movesCount}`;
-  createBg(bgSize, widthBgCell, count, widthCell,
-    imgNumberInRow, imgNumberOfRow, bgPosition);
+  createBg(
+    bgSize,
+    widthBgCell,
+    count,
+    widthCell,
+    imgNumberInRow,
+    imgNumberOfRow,
+    bgPosition,
+  );
   bgImageNumber = Math.ceil(Math.random() * 150);
   bgSize = getComputedStyle(container).width;
   randomArray = [];
   while (randomArray.length < n) {
-    currentNumber = Math.floor((Math.random() * n));
+    currentNumber = Math.floor(Math.random() * n);
     if (!randomArray.includes(currentNumber)) {
       randomArray.push(currentNumber);
     }
@@ -220,10 +225,14 @@ function createNewGame(n) {
 
     currentChip.style.width = `${widthCell}%`;
     currentChip.style.height = `${widthCell}%`;
-    currentChip.style.top = `${Math.floor((i / Math.sqrt(n))) * widthCell}%`;
+    currentChip.style.top = `${Math.floor(i / Math.sqrt(n)) * widthCell}%`;
     currentChip.style.left = `${(i % Math.sqrt(n)) * widthCell}%`;
-    currentChip.style.bottom = `${parseFloat(currentChip.style.top) + widthCell}%`;
-    currentChip.style.right = `${parseFloat(currentChip.style.left) + widthCell}%`;
+    currentChip.style.bottom = `${
+      parseFloat(currentChip.style.top) + widthCell
+    }%`;
+    currentChip.style.right = `${
+      parseFloat(currentChip.style.left) + widthCell
+    }%`;
     if (randomArray[i] !== 0) {
       currentChip.style.backgroundImage = `url(images/${bgImageNumber}.jpg)`;
       currentChip.style.backgroundSize = `${bgSize} ${bgSize}`;
@@ -253,31 +262,20 @@ function runTimer() {
   }, 1000);
 }
 
-function checkForSolve(cards, empt) {
-  let counter = 0;
-  for (let i = 0; i < cards.length - 1; i += 1) {
-    for (let j = i + 1; j < cards.length; j += 1) {
-      if (+cards[i].innerHTML > +cards[j].innerHTML) {
-        counter += 1;
-      }
+function isEnd(cards) {
+  for (let i = 0; i < cards.length; i += 1) {
+    if (+cards[i].style.order !== +cards[i].innerHTML) {
+      return;
     }
   }
-  const rowEmpty = Math.ceil((+empt.style.order) / Math.sqrt(count));
-
-  if (Math.sqrt(count) % 2 === 0) {
-    counter += rowEmpty;
-    if (counter % 2 === 0) {
-      runTimer();
-      chipsHandler();
-    } else {
-      createNewGame(count);
-    }
-  } else if (counter % 2 === 0) {
-    runTimer();
-    chipsHandler();
-  } else {
-    createNewGame(count);
-  }
+  clearInterval(timerId);
+  gameOver.innerHTML = `You solved gem-puzzle in ${currMin} : ${currSec} and ${movesCount} moves!!!`;
+  gameOver.classList.add('congrat-show');
+  gameOver.classList.remove('congrat-hide');
+  gameOver.style.backgroundImage = `url(images/${bgImageNumber}.jpg)`;
+  gameOver.style.backgroundSize = `${bgSize} ${bgSize}`;
+  gameCurrent = false;
+  addBestScore(sec, min, currMin, currSec, movesCount, scores);
 }
 
 function chipsHandler() {
@@ -293,11 +291,33 @@ function chipsHandler() {
         const startY = e.pageY;
         const shiftX = e.pageX - chip.getBoundingClientRect().left;
         const shiftY = e.pageY - chip.getBoundingClientRect().top;
-        if ((chip.style.top === empty.style.bottom && chip.style.left === empty.style.left)
-        || (chip.style.bottom === empty.style.top && chip.style.left === empty.style.left)
-        || (chip.style.left === empty.style.right && chip.style.top === empty.style.top)
-        || (chip.style.right === empty.style.left && chip.style.top === empty.style.top)) {
-          if (iconSound.innerHTML === '<i class="material-icons">volume_up</i>') {
+
+        function moveAt(pageX, pageY) {
+          chip.style.left = `${
+            pageX - shiftX - puzzleBox.getBoundingClientRect().left
+          }px`;
+          chip.style.top = `${
+            pageY - shiftY - puzzleBox.getBoundingClientRect().top
+          }px`;
+        }
+
+        function onMouseMove(event) {
+          moveAt(event.pageX, event.pageY);
+        }
+
+        if (
+          (chip.style.top === empty.style.bottom &&
+            chip.style.left === empty.style.left) ||
+          (chip.style.bottom === empty.style.top &&
+            chip.style.left === empty.style.left) ||
+          (chip.style.left === empty.style.right &&
+            chip.style.top === empty.style.top) ||
+          (chip.style.right === empty.style.left &&
+            chip.style.top === empty.style.top)
+        ) {
+          if (
+            iconSound.innerHTML === '<i class="material-icons">volume_up</i>'
+          ) {
             sound.currentTime = 0;
             sound.play();
           }
@@ -306,83 +326,122 @@ function chipsHandler() {
           moveAt(e.pageX, e.pageY);
           document.addEventListener('mousemove', onMouseMove);
         }
-        function moveAt(pageX, pageY) {
-          chip.style.left = `${pageX - shiftX - puzzleBox.getBoundingClientRect().left}px`;
-          chip.style.top = `${pageY - shiftY - puzzleBox.getBoundingClientRect().top}px`;
-        }
-
-        function onMouseMove(event) {
-          moveAt(event.pageX, event.pageY);
-        }
 
         chip.onmouseup = (ev) => {
           document.removeEventListener('mousemove', onMouseMove);
           chip.onmouseup = null;
-          if ((ev.pageX - startX) === 0 && (ev.pageY - startY) === 0) {
-            if (topMemory === empty.style.bottom && leftMemory === empty.style.left) {
+          if (ev.pageX - startX === 0 && ev.pageY - startY === 0) {
+            if (
+              topMemory === empty.style.bottom &&
+              leftMemory === empty.style.left
+            ) {
               movesCount += 1;
               moves.innerHTML = `Moves ${movesCount}`;
               chip.classList.add('to-top');
               empty.classList.add('to-bottom');
               setTimeout(() => {
-                changeOrder(chip, orderMemory, topMemory, bottomMemory, leftMemory,
-                  rightMemory);
+                changeOrder(
+                  chip,
+                  orderMemory,
+                  topMemory,
+                  bottomMemory,
+                  leftMemory,
+                  rightMemory,
+                );
                 enabled = true;
                 chip.classList.remove('to-top');
                 empty.classList.remove('to-bottom');
                 isEnd(chips);
               }, 300);
             }
-            if (bottomMemory === empty.style.top && leftMemory === empty.style.left) {
+            if (
+              bottomMemory === empty.style.top &&
+              leftMemory === empty.style.left
+            ) {
               movesCount += 1;
               moves.innerHTML = `Moves ${movesCount}`;
               chip.classList.add('to-bottom');
               empty.classList.add('to-top');
               setTimeout(() => {
-                changeOrder(chip, orderMemory, topMemory, bottomMemory, leftMemory,
-                  rightMemory);
+                changeOrder(
+                  chip,
+                  orderMemory,
+                  topMemory,
+                  bottomMemory,
+                  leftMemory,
+                  rightMemory,
+                );
                 enabled = true;
                 chip.classList.remove('to-bottom');
                 empty.classList.remove('to-top');
                 isEnd(chips);
               }, 300);
             }
-            if (leftMemory === empty.style.right && topMemory === empty.style.top) {
+            if (
+              leftMemory === empty.style.right &&
+              topMemory === empty.style.top
+            ) {
               movesCount += 1;
               moves.innerHTML = `Moves ${movesCount}`;
               chip.classList.add('to-left');
               empty.classList.add('to-right');
               setTimeout(() => {
-                changeOrder(chip, orderMemory, topMemory, bottomMemory, leftMemory,
-                  rightMemory);
+                changeOrder(
+                  chip,
+                  orderMemory,
+                  topMemory,
+                  bottomMemory,
+                  leftMemory,
+                  rightMemory,
+                );
                 enabled = true;
                 chip.classList.remove('to-left');
                 empty.classList.remove('to-right');
                 isEnd(chips);
               }, 300);
             }
-            if (rightMemory === empty.style.left && topMemory === empty.style.top) {
+            if (
+              rightMemory === empty.style.left &&
+              topMemory === empty.style.top
+            ) {
               movesCount += 1;
               moves.innerHTML = `Moves ${movesCount}`;
               chip.classList.add('to-right');
               empty.classList.add('to-left');
               setTimeout(() => {
-                changeOrder(chip, orderMemory, topMemory, bottomMemory, leftMemory,
-                  rightMemory);
+                changeOrder(
+                  chip,
+                  orderMemory,
+                  topMemory,
+                  bottomMemory,
+                  leftMemory,
+                  rightMemory,
+                );
                 enabled = true;
                 chip.classList.remove('to-right');
                 empty.classList.remove('to-left');
                 isEnd(chips);
               }, 300);
             }
-          } else if ((topMemory === empty.style.bottom && leftMemory === empty.style.left)
-           || (bottomMemory === empty.style.top && leftMemory === empty.style.left)
-           || (leftMemory === empty.style.right && topMemory === empty.style.top)
-           || (rightMemory === empty.style.left && topMemory === empty.style.top)) {
+          } else if (
+            (topMemory === empty.style.bottom &&
+              leftMemory === empty.style.left) ||
+            (bottomMemory === empty.style.top &&
+              leftMemory === empty.style.left) ||
+            (leftMemory === empty.style.right &&
+              topMemory === empty.style.top) ||
+            (rightMemory === empty.style.left && topMemory === empty.style.top)
+          ) {
             movesCount += 1;
             moves.innerHTML = `Moves ${movesCount}`;
-            changeOrder(chip, orderMemory, topMemory, bottomMemory, leftMemory,
-              rightMemory);
+            changeOrder(
+              chip,
+              orderMemory,
+              topMemory,
+              bottomMemory,
+              leftMemory,
+              rightMemory,
+            );
             enabled = true;
             isEnd(chips);
           }
@@ -390,6 +449,33 @@ function chipsHandler() {
       }
     });
   });
+}
+
+function checkForSolve(cards, empt) {
+  let counter = 0;
+  for (let i = 0; i < cards.length - 1; i += 1) {
+    for (let j = i + 1; j < cards.length; j += 1) {
+      if (+cards[i].innerHTML > +cards[j].innerHTML) {
+        counter += 1;
+      }
+    }
+  }
+  const rowEmpty = Math.ceil(+empt.style.order / Math.sqrt(count));
+
+  if (Math.sqrt(count) % 2 === 0) {
+    counter += rowEmpty;
+    if (counter % 2 === 0) {
+      runTimer();
+      chipsHandler();
+    } else {
+      createNewGame(count);
+    }
+  } else if (counter % 2 === 0) {
+    runTimer();
+    chipsHandler();
+  } else {
+    createNewGame(count);
+  }
 }
 
 function saveGame() {
@@ -411,22 +497,6 @@ function saveGame() {
   currMin = (parseInt(min, 10) < 10 ? '0' : '') + min;
   currSec = (parseInt(sec, 10) < 10 ? '0' : '') + sec;
   time.innerHTML = `Time ${currMin} : ${currSec}`;
-}
-
-function isEnd(cards) {
-  for (let i = 0; i < cards.length; i += 1) {
-    if (+cards[i].style.order !== +cards[i].innerHTML) {
-      return;
-    }
-  }
-  clearInterval(timerId);
-  gameOver.innerHTML = `You solved gem-puzzle in ${currMin} : ${currSec} and ${movesCount} moves!!!`;
-  gameOver.classList.add('congrat-show');
-  gameOver.classList.remove('congrat-hide');
-  gameOver.style.backgroundImage = `url(images/${bgImageNumber}.jpg)`;
-  gameOver.style.backgroundSize = `${bgSize} ${bgSize}`;
-  gameCurrent = false;
-  addBestScore(sec, min, currMin, currSec, movesCount, scores);
 }
 
 newGameBtn.addEventListener('click', () => {
@@ -532,7 +602,9 @@ bestScoresBtn.addEventListener('click', () => {
     scores = JSON.parse(localStorage.getItem('bestScores'));
     for (let i = 0; i < scores.length; i += 1) {
       const record = document.createElement('div');
-      record.innerHTML = `${i + 1}. time: ${scores[i]['score-time']}   moves: ${scores[i]['score-moves']}`;
+      record.innerHTML = `${i + 1}. time: ${scores[i]['score-time']}   moves: ${
+        scores[i]['score-moves']
+      }`;
       records.append(record);
     }
   } else {
@@ -554,12 +626,15 @@ window.addEventListener('resize', () => {
   for (let i = 0; i < count; i += 1) {
     imgNumberInRow = i % Math.sqrt(count);
     imgNumberOfRow = Math.floor(i / Math.sqrt(count));
-    bgPosition[i] = `-${imgNumberInRow * widthBgCell}px -${imgNumberOfRow * widthBgCell}px`;
+    bgPosition[i] = `-${imgNumberInRow * widthBgCell}px -${
+      imgNumberOfRow * widthBgCell
+    }px`;
   }
   for (let i = 0; i < count; i += 1) {
     if (parseInt(elements[i].innerText, 10) !== 0) {
       elements[i].style.backgroundSize = `${bgSize} ${bgSize}`;
-      elements[i].style.backgroundPosition = bgPosition[parseInt(elements[i].innerText, 10) - 1];
+      elements[i].style.backgroundPosition =
+        bgPosition[parseInt(elements[i].innerText, 10) - 1];
     }
   }
   lastWindowWidth = newWindowWidth;

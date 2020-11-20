@@ -17,24 +17,6 @@ module.exports = {
 
   module: {
     rules: [
-      // {
-      //   test: /\.scss$/,
-      //   use: [
-      //     'style-loader',
-      //     MiniCssExtractPlugin.loader,
-      //     {
-      //       loader: 'css-loader',
-      //       options: {
-      //         sourceMap: true,
-      //       },
-      //     }, {
-      //       loader: 'sass-loader',
-      //       options: {
-      //         sourceMap: true,
-      //       },
-      //     },
-      //   ],
-      // },
       {
         test: /\.(js)$/,
         exclude: /node_modules/,
@@ -58,7 +40,8 @@ module.exports = {
             options: {
               sourceMap: true,
             },
-          }, {
+          },
+          {
             loader: 'sass-loader',
             options: {
               sourceMap: true,
@@ -102,14 +85,6 @@ module.exports = {
     ],
   },
   plugins: [
-    // new CopyPlugin({
-    //   patterns: [
-    //     {
-    //       from: path.resolve(__dirname, 'src/images/'),
-    //       to: path.resolve(__dirname, 'dist/images/'),
-    //     },
-    //   ],
-    // }),
     new MiniCssExtractPlugin({
       filename: '[name].css',
       chunkFilename: '[id].css',

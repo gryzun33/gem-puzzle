@@ -2,12 +2,18 @@ export function showDigits(chips) {
   const digit = document.querySelector('.digit');
   digit.addEventListener('click', () => {
     chips.forEach((chip) => {
-      if (getComputedStyle(chip).color === 'rgba(0, 0, 0, 0)') {
-        chip.style.color = 'white';
-        chip.style.textShadow = '1px 1px 5px black';
+      if (
+        getComputedStyle(chip).fontSize === '0px' &&
+        window.innerWidth > 500
+      ) {
+        chip.style.fontSize = '30px';
+      } else if (
+        getComputedStyle(chip).fontSize === '0px' &&
+        window.innerWidth <= 500
+      ) {
+        chip.style.fontSize = '20px';
       } else {
-        chip.style.color = 'transparent';
-        chip.style.textShadow = '';
+        chip.style.fontSize = '0px';
       }
     });
   });

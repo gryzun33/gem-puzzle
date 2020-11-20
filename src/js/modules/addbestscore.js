@@ -5,8 +5,9 @@ export function addBestScore(sec, min, currMin, currSec, movesCount, scores) {
     'score-time': `${currMin} : ${currSec}`,
     'score-moves': movesCount,
   };
-  if (localStorage.getItem('bestScores')) {
-    scores = JSON.parse(localStorage.getItem('bestScores'));
+  const best = localStorage.getItem('bestScores');
+  if (best) {
+    scores = JSON.parse(best);
   }
   scores.push(score);
   if (scores.length >= 2) {
